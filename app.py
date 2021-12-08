@@ -1,90 +1,218 @@
 # Imports
-from datetime import datetime, timedelta
-
-import matplotlib.pyplot as plt
+import dash
+from dash import dcc
+import plotly.graph_objects as go
+from dash import html
+from dash.dependencies import Output, Input
 
 # User define functions
 import utils as ut
-from classes import KrakenTrades, GroupedTrades
+from classes import KrakenTrades, GroupedTrades, TimeParams
 
+# Default params:
+default_crypto = 'ETH'
+default_currency = 'EUR'
+default_window = '5 min'
+default_anchor = '-6 hours'
+CONSTANT_NO_WINDOWS = 120
 
-def plot(_trades, _grouped_trades, _window):
-
-    # Sticks (High / Low)
-    sticks = _grouped_trades.ohlc[['Low', 'High']].copy().reset_index()
-    sticks['Time'] = sticks['Time'] + timedelta(seconds=_window / 2)
-    sticks = sticks.to_numpy()
-
-    # Candle (Close / Open)
-    candles = _grouped_trades.ohlc[['oc_min', 'oc_max']].copy()
-    candles['oc_color'] = _grouped_trades.ohlc['oc_sign'].\
-        map(lambda x: ut.candles_color.get(x))
-    candles = candles[['oc_min', 'oc_max', 'oc_color']].\
-        reset_index()
-    candles['Time'] = candles['Time'] + timedelta(seconds=_window / 2)
-    candles = candles.to_numpy()
-
-    # Graph ohlc + vwap
-    plt.figure(figsize=(20, 6))
-    plt.vlines(sticks[:, 0],
-               sticks[:, 1], sticks[:, 2],
-               'black', linewidths=1)
-    plt.vlines(candles[:, 0],
-               candles[:, 1], candles[:, 2],
-               candles[:, 3], linewidths=7)
-
-    vwap = _grouped_trades.vwap['vwap'].copy()
-    vwap.index = vwap.index + timedelta(seconds=_window / 2)
-    plt.plot(vwap)
-
-    # Volumes
-    volume = _grouped_trades.volume[['Value']].copy()
-    volume['Base'] = 0
-    volume['oc_color'] = _grouped_trades.volume['oc_sign'].\
-        map(lambda x: ut.candles_color.get(x))
-    volume = volume.reset_index()
-    volume['Time'] = volume['Time'] + timedelta(seconds=_window / 2)
-    volume = volume.to_numpy()
-
-    # Graph volumes
-    plt.figure(figsize=(20, 2))
-    plt.vlines(volume[:, 0],
-               volume[:, 2], volume[:, 1],
-               volume[:, 3], linewidths=7)
-    _trades.values['Price'].plot()
-
-    # Graph instant
-    plt.figure(figsize=(20, 2))
-    _trades.values['Price'].plot()
-
-
-# Execute
-interval = '5 min'
-time_span = '6 hour'
-window = ut.intervals[interval][0]
-frequency = ut.intervals[interval][1]
-number_of_windows = ut.time_spans[time_span] / window
-
-end_time = datetime.now()
-
-window_start = ut.get_time_window_start(end_time, window=window)
-span_interval =\
-  ut.get_datime_interval(to_datetime=window_start,
-                         window=window,
-                         number_of_windows=number_of_windows)
-starting_time = span_interval[0]
+tparams = TimeParams(default_window, default_anchor, CONSTANT_NO_WINDOWS)
+currency_pair = 'X'+default_crypto+'Z'+default_currency
 
 # Trades
-trades = KrakenTrades('XETHZEUR')
-trades.get_trades_from(starting_time)
+trades = KrakenTrades(currency_pair)
+trades.get_trades_from(tparams.trades_start)
 
-flag = True
-while flag:
+external_stylesheets = [
+    {
+        "href": "https://fonts.googleapis.com/css2?"
+                "family=Lato:wght@400;700&display=swap",
+        "rel": "stylesheet",
+    },
+]
 
-    trades.update_trades()
-    grouped_trades = GroupedTrades(frequency)
-    grouped_trades.load_values(trades.values)
+app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
+app.title = "Cotizaciones crypto"
+server = app.server
 
-    plot(trades, grouped_trades, window)
-    plt.show()
-    flag = False
+app.layout = html.Div(
+    children=[
+
+        html.Div(
+            children=[
+                html.H1(
+                    children="Par de monedas", className="header-title"
+                ),
+                html.P(
+                    children="Display cotizaciones par de monedas en tiempo"
+                             " real.",
+                    className="header-description",
+                ),
+            ],
+            className="header",
+        ),
+
+        html.Div(
+            children=[
+                html.Div(
+                    children=[
+                        html.Div(children="Crypto", className="menu-title"),
+                        dcc.Dropdown(
+                            id="from-crypto",
+                            options=[
+                                {"label": crypto, "value": crypto}
+                                for crypto in ['ETH', 'XBT']
+                            ],
+                            value=default_crypto,
+                            clearable=False,
+                            className="dropdown",
+                        ),
+                    ]
+                ),
+                html.Div(
+                    children=[
+                        html.Div(children="Currency", className="menu-title"),
+                        dcc.Dropdown(
+                            id="to-currency",
+                            options=[
+                                {"label": currency, "value": currency}
+                                for currency in ['EUR', 'USD']
+                            ],
+                            value=default_currency,
+                            clearable=False,
+                            searchable=False,
+                            className="dropdown",
+                        ),
+                    ],
+                ),
+                html.Div(
+                    children=[
+                        html.Div(children="Window", className="menu-title"),
+                        dcc.Dropdown(
+                            id="window-size",
+                            options=[
+                                {"label": window, "value": window}
+                                for window in ut.window_size.keys()
+                            ],
+                            value=default_window,
+                            clearable=False,
+                            className="dropdown",
+                        ),
+                    ]
+                ),
+                html.Div(
+                    children=[
+                        html.Div(children="Anchor", className="menu-title"),
+                        dcc.Dropdown(
+                            id="anchor-time",
+                            options=[
+                                {"label": anchor, "value": anchor}
+                                for anchor in ut.anchor_time.keys()
+                            ],
+                            value=default_anchor,
+                            clearable=False,
+                            searchable=False,
+                            className="dropdown",
+                        ),
+                    ]
+                ),
+            ],
+            className="menu",
+        ),
+        html.Div(
+            children=[
+                html.Div(
+                    children=dcc.Graph(
+                        id="graph-ohlc", config={"displayModeBar": False},
+                    ),
+                    className="card",
+                ),
+                html.Div(
+                    children=dcc.Graph(
+                        id="graph-volume", config={"displayModeBar": False},
+                    ),
+                    className="card",
+                ),
+                html.Div(
+                    children=dcc.Graph(
+                        id="graph-instant", config={"displayModeBar": False},
+                    ),
+                    className="card",
+                ),
+            ],
+            className="wrapper",
+        ),
+    ]
+)
+
+
+@app.callback(
+    [
+        Output("graph-instant", "figure"),
+        Output("graph-ohlc", "figure"),
+        Output("graph-volume", "figure"),
+    ],
+    [
+        Input("from-crypto", "value"),
+        Input("to-currency", "value"),
+        Input("window-size", "value"),
+        Input("anchor-time", "value"),
+    ])
+def display(from_crypto, to_currency, window_size, anchor_time):
+
+    # Update values:
+    new_pair = 'X'+from_crypto+'Z'+to_currency
+
+    previous_start = tparams.trades_start
+    tparams.update_params(window_size, anchor_time, CONSTANT_NO_WINDOWS)
+
+    print('Pair :', new_pair)
+    print('Previous start: ', previous_start)
+    print('Actual start  : ', tparams.trades_start)
+
+    trades.update_trades(new_pair, tparams.trades_start)
+    # Grouped trades
+    grouped_trades = GroupedTrades()
+    grouped_trades.load_values(trades.values,
+                               tparams.frequency,
+                               tparams.anchor_time)
+
+    # Graph always 120 (CONSTANT_NO_WINDOWS) windows
+    ohlc_data = grouped_trades.ohlc[-(CONSTANT_NO_WINDOWS+1):]
+    vwap_data = grouped_trades.vwap[-(CONSTANT_NO_WINDOWS + 1):]
+    fig_ohlc = go.Figure()
+    fig_ohlc.add_trace(
+        go.Candlestick(
+            x=ohlc_data.index,
+            open=ohlc_data['Open'],
+            high=ohlc_data['High'],
+            low=ohlc_data['Low'],
+            close=ohlc_data['Close']
+        )
+    )
+    fig_ohlc.add_trace(
+        go.Scatter(x=vwap_data.index,
+                   y=vwap_data.vwap)
+    )
+    fig_ohlc.update_layout(xaxis_rangeslider_visible=False)
+
+    volume_data = grouped_trades.volume[-(CONSTANT_NO_WINDOWS + 1):]
+    fig_volume = go.Figure()
+    volume_colors = volume_data.oc_sign.map(lambda x: ut.candles_color.get(x))
+    fig_volume.add_trace(
+        go.Bar(x=volume_data.index,
+               y=volume_data.Value,
+               marker_color=volume_colors)
+    )
+
+    fig_instant = go.Figure()
+    fig_instant.add_trace(
+        go.Scatter(x=trades.values.index,
+                   y=trades.values.Price)
+    )
+
+    return fig_instant, fig_ohlc, fig_volume
+
+
+if __name__ == "__main__":
+    app.run_server(debug=True)

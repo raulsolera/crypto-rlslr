@@ -4,13 +4,24 @@ from pytz import timezone
 datetime_interval = tuple([datetime, datetime])
 
 # Parameters
+# Standard currencies
+std_currencies = {
+    'EUR': 'Euro',
+    'USD': 'Dolar'
+}
+# Crypto currencies
+crypto_currencies = {
+    'XBT': 'Bitcoin',
+    'ETH': 'Ethereum',
+}
+
 # Candle graph
 candles_color = {
     -1: 'red',
-    0: 'black',
+    0: 'lightslategray',
     1: 'green'}
 
-intervals = {
+window_size = {
     '10 sec':  (10,      '10s'),
     '30 sec':  (30,      '30s'),
     '1 min':   (60,     '1min'),
@@ -18,24 +29,16 @@ intervals = {
     '5 min':   (60*5,   '5min'),
     '10 min':  (60*10, '10min'),
     '15 min':  (60*15, '15min'),
-    '30 min':  (60*30, '30min'),
-    '1 hour':  (3600,     '1h'),
-    '2 hour':  (3600*2,   '2h'),
-    '6 hour':  (3600*6,   '6h'),
-    '12 hour': (3600*12, '12h'),
-    '1 day':   (3600*24,  '1D')}
-
-time_spans = {
-    '24 hour': 24*60*60,
-    '12 hour': 12*60*60,
-    '6 hour':   6*60*60,
-    '3 hour':   3*60*60,
-    '1 hour':   1*60*60}
+}
 
 anchor_time = {
-    'From 0:00':'',
-    'Window start': ''
-}
+    '-24 hours':  24*60*60,
+    '-12 hours':  12*60*60,
+    '-6 hours':    6*60*60,
+    '-3 hours':    3*60*60,
+    '-1 hours':    1*60*60,
+    'From now':    0*60*60,
+    'No anchor':      None}
 
 
 def utc_to_timezone(_utc: datetime,

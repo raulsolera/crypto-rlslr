@@ -2,6 +2,9 @@ import pandas as pd
 import time
 import urllib.request
 import json
+from datetime import datetime, timedelta
+import utils as ut
+
 
 class KrakenTrades:
     API_DOMAIN = 'https://api.kraken.com'
@@ -42,6 +45,7 @@ class KrakenTrades:
         # accumulate trades from starting time
         # repeat until objective time (_to) is reached
         _trades = []
+        last_timestamp = None
         while True:
             api_data = f'?pair={self.pair}&since={api_start}'
             api_request = urllib.request.Request(
@@ -56,10 +60,16 @@ class KrakenTrades:
             api_data = json.loads(api_data)
 
             # Move starting time
-            api_start = api_data["result"]["last"]
+            try:
+                api_start = api_data["result"]["last"]
+            except KeyError:
+                print('Waiting')
+                time.sleep(3)
+                continue
 
             # Accumulate trades
             _trades += api_data['result'][self.pair]
+            print('No of trades:', len(_trades))
 
             # Check if objective time is reached or no result from last datetime
             last_timestamp = int(api_data['result']['last']) / 1000000000
@@ -75,11 +85,18 @@ class KrakenTrades:
         self.values = self.__trades_to_dataframe(_trades)
         # while until get end of interval or if no end to last
 
-    def update_trades(self):
-        # from last to now and update last
-        _trades, self.last_trade = self.__retrive_trades(self.last_trade)
-        self.values = pd.concat([self.values,
-                                 self.__trades_to_dataframe(_trades)])
+    def update_trades(self, _pair, _from):
+        # If no change in crypto / standard currency pair
+        # then update from last to now and update last
+        if _pair == self.pair and _from >= self.first_trade:
+            _trades, self.last_trade = self.__retrive_trades(self.last_trade)
+            self.values = pd.concat([self.values,
+                                     self.__trades_to_dataframe(_trades)])
+        else:
+            print('Recalculando datos...')
+            self.pair = _pair
+            self.values = pd.DataFrame()
+            self.get_trades_from(_from)
 
     def __str__(self):
         return \
@@ -91,16 +108,17 @@ class KrakenTrades:
 
 class GroupedTrades:
 
-    def __init__(self, _frequency, _anchor_time=None):
-        self.frequency = _frequency
-        self.anchor = _anchor_time
+    def __init__(self):
+        self.frequency = None
+        self.anchor = None
         self.last_complete_window = None
         self.values = pd.DataFrame()
         self.ohlc = pd.DataFrame()
         self.vwap = pd.DataFrame()
 
     def __update_simple_vwap(self):
-        self.vwap = self.values['Value'] / self.values['Volume']
+        self.vwap = self.values[['Value', 'Volume']].copy()
+        self.vwap['vwap'] = self.vwap['Value'] / self.vwap['Volume']
 
     def __update_classic_vwap(self):
         # vwap calculated from anchor time
@@ -122,14 +140,10 @@ class GroupedTrades:
     def __update_values(self, _trades):
         # Aggregate trades
         self.values = \
-            _trades.groupby(pd.Grouper(freq=frequency, label='left')). \
+            _trades.groupby(pd.Grouper(freq=self.frequency, label='left')). \
             agg(Volume=('Volume', 'sum'), Value=('Value', 'sum'),
                 Open=('Price', 'first'), High=('Price', 'max'),
                 Low=('Price', 'min'), Close=('Price', 'last'))
-
-        # Update anchor if not given
-        if not self.anchor:
-            self.anchor = self.values.index[0]
 
         # Calculations for ohlc
         self.values['oc_max'] = self.values[['Open', 'Close']].max(axis=1)
@@ -143,16 +157,64 @@ class GroupedTrades:
                                  'oc_min', 'oc_max', 'oc_sign']]
 
         self.volume = self.values[['Value', 'oc_sign']]
-        self.__update_classic_vwap()
 
-        # recibo trades,
-        # me quedo con los que son mayores que la última ventana completa
-        # calculo el vwap de los trades
-        # calculo _temp_last_complete_window
-        # Desecho el vwap de la última ventana no completa
-        # concateno los nuevos vwap
-        # actualizo last_complete_window
+        # Calculate vwap from anchor time or simple vwap if not given
+        if self.anchor:
+            self.__update_classic_vwap()
+        else:
+            self.__update_simple_vwap()
 
-    def load_values(self, _trades):
+    def load_values(self, _trades, _frequency, _anchor_time):
+        self.frequency = _frequency
+        self.anchor = _anchor_time
         self.__update_values(_trades)
 
+
+class TimeParams:
+
+    def __init__(self, window_size_name, anchor_name, no_windows):
+        self.window_size_name = None
+        self.window_size = None
+        self.frequency = None
+        self.anchor_name = None
+        self.anchor_gap = None
+        self.number_of_windows = None
+        self.anchor_time, self.trades_start = (None, None)
+        self.update_params(window_size_name, anchor_name, no_windows)
+
+    def update_params(self, window_size_name, anchor_name, no_windows):
+        self.window_size_name = window_size_name
+        self.window_size = ut.window_size[window_size_name][0]
+        self.frequency = ut.window_size[window_size_name][1]
+        self.anchor_name = anchor_name
+        self.anchor_gap = ut.anchor_time[anchor_name]
+        self.number_of_windows = no_windows
+        self.anchor_time, self.trades_start = self.__trades_from_time__()
+
+    def __trades_from_time__(self):
+        # Considering we divide the hour in different windows
+        # get the begining of the last window before now()
+        last_window_start = \
+            ut.get_time_window_start(datetime.now(),
+                                     window=self.window_size)
+        # Considering we are showing no_windows number of windows
+        # calculate the starting time from the last window start that
+        # give us that than number of full windows
+        span_interval = \
+            ut.get_datime_interval(to_datetime=last_window_start,
+                                   window=self.window_size,
+                                   number_of_windows=self.number_of_windows)
+
+        # As we are setting an anchor time for calculating the vwap
+        # we substract a number of hours from the last window start
+        # or we define that there is no anchor
+        if self.anchor_gap:
+            anchor_time = last_window_start -\
+                          timedelta(seconds=self.anchor_gap)
+            trades_start = min(anchor_time, span_interval[0])
+            # Finally we need trades from the min of the starting time
+            # of the graph and the anchor time calculated previously
+            return anchor_time, trades_start
+        else:
+            # Or if no anchor
+            return None, span_interval[0]
