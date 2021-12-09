@@ -39,7 +39,7 @@ class KrakenTrades:
         else:
             self.first_trade = _from
 
-        # AP start
+        # API start
         api_start = f'{_from.timestamp() * 1000000000 + 1000:.0f}'
 
         # accumulate trades from starting time
@@ -53,7 +53,7 @@ class KrakenTrades:
             try:
                 api_data = urllib.request.urlopen(api_request).read()
             except Exception as err:
-                print(err)
+                print('Receiving error from api: ', err, end='\r')
                 time.sleep(3)
                 continue
 
@@ -63,13 +63,13 @@ class KrakenTrades:
             try:
                 api_start = api_data["result"]["last"]
             except KeyError:
-                print('Waiting')
+                print('Waiting', end='\r')
                 time.sleep(3)
                 continue
 
             # Accumulate trades
             _trades += api_data['result'][self.pair]
-            print('No of trades:', len(_trades))
+            print('Receiving trades:', len(_trades), end='\r')
 
             # Check if objective time is reached or no result from last datetime
             last_timestamp = int(api_data['result']['last']) / 1000000000
@@ -80,23 +80,25 @@ class KrakenTrades:
         return (_trades,
                 datetime.fromtimestamp(last_timestamp))
 
-    def get_trades_from(self, _from):
-        _trades, self.last_trade = self.__retrive_trades(_from)
-        self.values = self.__trades_to_dataframe(_trades)
-        # while until get end of interval or if no end to last
-
     def update_trades(self, _pair, _from):
+
+        # If first time we update --> we have to load from the beginning
+        if not self.first_trade:
+            _trades, self.last_trade = self.__retrive_trades(_from)
+            self.values = self.__trades_to_dataframe(_trades)
+
         # If no change in crypto / standard currency pair
         # then update from last to now and update last
-        if _pair == self.pair and _from >= self.first_trade:
+        elif _pair == self.pair and _from >= self.first_trade:
             _trades, self.last_trade = self.__retrive_trades(self.last_trade)
             self.values = pd.concat([self.values,
                                      self.__trades_to_dataframe(_trades)])
         else:
-            print('Recalculando datos...')
+            print('Recalculando datos...', end='\r')
             self.pair = _pair
             self.values = pd.DataFrame()
-            self.get_trades_from(_from)
+            _trades, self.last_trade = self.__retrive_trades(_from)
+            self.values = self.__trades_to_dataframe(_trades)
 
     def __str__(self):
         return \
@@ -194,9 +196,11 @@ class TimeParams:
     def __trades_from_time__(self):
         # Considering we divide the hour in different windows
         # get the begining of the last window before now()
+
         last_window_start = \
             ut.get_time_window_start(datetime.now(),
                                      window=self.window_size)
+
         # Considering we are showing no_windows number of windows
         # calculate the starting time from the last window start that
         # give us that than number of full windows
@@ -208,7 +212,7 @@ class TimeParams:
         # As we are setting an anchor time for calculating the vwap
         # we substract a number of hours from the last window start
         # or we define that there is no anchor
-        if self.anchor_gap:
+        if self.anchor_gap is not None:
             anchor_time = last_window_start -\
                           timedelta(seconds=self.anchor_gap)
             trades_start = min(anchor_time, span_interval[0])

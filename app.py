@@ -2,6 +2,7 @@
 import dash
 from dash import dcc
 import plotly.graph_objects as go
+from plotly.subplots import make_subplots
 from dash import html
 from dash.dependencies import Output, Input
 
@@ -12,16 +13,9 @@ from classes import KrakenTrades, GroupedTrades, TimeParams
 # Default params:
 default_crypto = 'ETH'
 default_currency = 'EUR'
-default_window = '5 min'
-default_anchor = '-6 hours'
-CONSTANT_NO_WINDOWS = 120
-
-tparams = TimeParams(default_window, default_anchor, CONSTANT_NO_WINDOWS)
-currency_pair = 'X'+default_crypto+'Z'+default_currency
-
-# Trades
-trades = KrakenTrades(currency_pair)
-trades.get_trades_from(tparams.trades_start)
+default_window = '1 min'
+default_anchor = '-2 hours'
+CONSTANT_NO_WINDOWS = 90
 
 external_stylesheets = [
     {
@@ -41,11 +35,10 @@ app.layout = html.Div(
         html.Div(
             children=[
                 html.H1(
-                    children="Par de monedas", className="header-title"
+                    children="Crypto price", className="header-title"
                 ),
                 html.P(
-                    children="Display cotizaciones par de monedas en tiempo"
-                             " real.",
+                    children="Crypto price .vs. standard currency",
                     className="header-description",
                 ),
             ],
@@ -123,19 +116,7 @@ app.layout = html.Div(
             children=[
                 html.Div(
                     children=dcc.Graph(
-                        id="graph-ohlc", config={"displayModeBar": False},
-                    ),
-                    className="card",
-                ),
-                html.Div(
-                    children=dcc.Graph(
-                        id="graph-volume", config={"displayModeBar": False},
-                    ),
-                    className="card",
-                ),
-                html.Div(
-                    children=dcc.Graph(
-                        id="graph-instant", config={"displayModeBar": False},
+                        id="graph", config={"displayModeBar": False},
                     ),
                     className="card",
                 ),
@@ -147,11 +128,8 @@ app.layout = html.Div(
 
 
 @app.callback(
-    [
-        Output("graph-instant", "figure"),
-        Output("graph-ohlc", "figure"),
-        Output("graph-volume", "figure"),
-    ],
+
+    Output("graph", "figure"),
     [
         Input("from-crypto", "value"),
         Input("to-currency", "value"),
@@ -160,59 +138,124 @@ app.layout = html.Div(
     ])
 def display(from_crypto, to_currency, window_size, anchor_time):
 
-    # Update values:
+    # Update params and time values:
     new_pair = 'X'+from_crypto+'Z'+to_currency
-
-    previous_start = tparams.trades_start
     tparams.update_params(window_size, anchor_time, CONSTANT_NO_WINDOWS)
 
-    print('Pair :', new_pair)
-    print('Previous start: ', previous_start)
-    print('Actual start  : ', tparams.trades_start)
-
+    # update trades
     trades.update_trades(new_pair, tparams.trades_start)
-    # Grouped trades
+
+    # group trades
     grouped_trades = GroupedTrades()
     grouped_trades.load_values(trades.values,
                                tparams.frequency,
                                tparams.anchor_time)
 
+    # Control data to show in the window
     # Graph always 120 (CONSTANT_NO_WINDOWS) windows
     ohlc_data = grouped_trades.ohlc[-(CONSTANT_NO_WINDOWS+1):]
     vwap_data = grouped_trades.vwap[-(CONSTANT_NO_WINDOWS + 1):]
-    fig_ohlc = go.Figure()
-    fig_ohlc.add_trace(
+    volume_data = grouped_trades.volume[-(CONSTANT_NO_WINDOWS + 1):]
+    window_time_start = vwap_data.index[0]
+    # instant_data = trades.values[trades.values.index >= window_time_start]
+
+    # make graphs
+    fig = make_subplots(specs=[[{"secondary_y": True}]])
+    fig.add_trace(
         go.Candlestick(
             x=ohlc_data.index,
             open=ohlc_data['Open'],
             high=ohlc_data['High'],
             low=ohlc_data['Low'],
-            close=ohlc_data['Close']
-        )
+            close=ohlc_data['Close'],
+            name='Ohlc'
+        ),
+        secondary_y=False,
     )
-    fig_ohlc.add_trace(
+    fig.add_trace(
         go.Scatter(x=vwap_data.index,
-                   y=vwap_data.vwap)
+                   y=vwap_data.vwap,
+                   line=dict(color='rgb(57, 105, 172)', width=2),
+                   name='Vwap'),
+        secondary_y=False,
     )
-    fig_ohlc.update_layout(xaxis_rangeslider_visible=False)
-
-    volume_data = grouped_trades.volume[-(CONSTANT_NO_WINDOWS + 1):]
-    fig_volume = go.Figure()
-    volume_colors = volume_data.oc_sign.map(lambda x: ut.candles_color.get(x))
-    fig_volume.add_trace(
+    # fig.add_trace(
+    #     go.Scatter(x=instant_data.index,
+    #                y=instant_data.Price, opacity=.75,
+    #                line=dict(color='gray', width=2),
+    #                name='Instant price'),
+    #     secondary_y=False,
+    # )
+    fig.add_trace(
         go.Bar(x=volume_data.index,
                y=volume_data.Value,
-               marker_color=volume_colors)
+               marker_color='rgb(47, 138, 196)',
+               marker_line_color='#1f77b4',
+               opacity=0.25,
+               marker_line_width=1.5,
+               name='Traded volume'),
+        secondary_y=True,
     )
+    fig.update_layout(xaxis_rangeslider_visible=False)
 
-    fig_instant = go.Figure()
-    fig_instant.add_trace(
-        go.Scatter(x=trades.values.index,
-                   y=trades.values.Price)
+    fig.update_layout(legend=dict(
+        orientation="h",
+        yanchor="bottom",
+        y=1.05,
+        xanchor="right",
+        x=1))
+
+    fig.update_xaxes(
+        showline=True,
+        linewidth=1,
+        linecolor='gray',
+        tickfont=dict(size=11))
+
+    fig.update_yaxes(
+        title_text=f"<b>Price</b> ({to_currency})",
+        titlefont=dict(
+            size=12,
+            color="gray"),
+        ticks="outside",
+        ticklen=10,
+        tickcolor='rgba(0,0,0,0)',
+        tickfont=dict(size=11),
+        secondary_y=False)
+    fig.update_yaxes(
+        title_text=f"<b>Traded volume</b> ({to_currency})",
+        titlefont=dict(
+            size=12,
+            color="gray"),
+        ticks="outside",
+        ticklen=10,
+        tickcolor='rgba(0,0,0,0)',
+        tickfont=dict(size=11),
+        showgrid=False,
+        secondary_y=True)
+
+    fig.update_layout(
+        autosize=True,
+        height=500,
+        margin=dict(
+            l=100,
+            r=50,
+            b=100,
+            t=100,
+            pad=1,
+        ),
+        paper_bgcolor='rgba(0,0,0,0)',
+        plot_bgcolor='rgba(0,0,0,0)'
     )
-
-    return fig_instant, fig_ohlc, fig_volume
+    return fig
 
 
 if __name__ == "__main__":
+
+    tparams = TimeParams(default_window, default_anchor, CONSTANT_NO_WINDOWS)
+    currency_pair = 'X' + default_crypto + 'Z' + default_currency
+
+    # Init KrakenTrades class
+    trades = KrakenTrades(currency_pair)
+    trades.update_trades(currency_pair, tparams.trades_start)
+
     app.run_server(debug=True)
