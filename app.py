@@ -278,3 +278,4 @@ if __name__ == "__main__":
     trades.update_trades(currency_pair, tparams.trades_start)
 
     app.run_server(debug=True)
+    

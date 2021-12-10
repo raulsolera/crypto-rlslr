@@ -121,3 +121,4 @@ def get_time_window_start(date_time: datetime, window: int) -> datetime:
     while previous_time < date_time:
         previous_time += timedelta(seconds=window)
     return previous_time - timedelta(seconds=window)
+
