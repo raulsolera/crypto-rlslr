@@ -72,7 +72,8 @@ class KrakenTrades:
             _trades += api_data['result'][self.pair]
             print('Receiving trades:', len(_trades), end='\r')
 
-            # Check if objective time is reached or no result from last datetime
+            # Check if objective time is reached
+            # or no result from last datetime
             last_timestamp = int(api_data['result']['last']) / 1000000000
             if last_timestamp >= _to.timestamp() or \
                     not api_data['result'][self.pair]:

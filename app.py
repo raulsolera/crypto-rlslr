@@ -1,10 +1,10 @@
 # Imports
 import dash
 from dash import dcc
-import plotly.graph_objects as go
-from plotly.subplots import make_subplots
 from dash import html
 from dash.dependencies import Output, Input
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
 
 # User define functions
 import utils as ut
@@ -49,7 +49,8 @@ app.layout = html.Div(
             children=[
                 html.Div(
                     children=[
-                        html.Div(children="From crypto", className="menu-title"),
+                        html.Div(children="From crypto",
+                                 className="menu-title"),
                         dcc.Dropdown(
                             id="from-crypto",
                             options=[
@@ -64,7 +65,8 @@ app.layout = html.Div(
                 ),
                 html.Div(
                     children=[
-                        html.Div(children="To currency", className="menu-title"),
+                        html.Div(children="To currency",
+                                 className="menu-title"),
                         dcc.Dropdown(
                             id="to-currency",
                             options=[
@@ -80,7 +82,8 @@ app.layout = html.Div(
                 ),
                 html.Div(
                     children=[
-                        html.Div(children="Time window", className="menu-title"),
+                        html.Div(children="Time window",
+                                 className="menu-title"),
                         dcc.Dropdown(
                             id="window-size",
                             options=[
@@ -95,7 +98,8 @@ app.layout = html.Div(
                 ),
                 html.Div(
                     children=[
-                        html.Div(children="Anchor (for Vwap calc)", className="menu-title"),
+                        html.Div(children="Anchor (for Vwap calc)",
+                                 className="menu-title"),
                         dcc.Dropdown(
                             id="anchor-time",
                             options=[
