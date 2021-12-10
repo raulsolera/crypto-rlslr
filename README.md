@@ -149,7 +149,7 @@ incluye la definición de las clases para facilitar el proceso:
                 Open=('Price', 'first'), High=('Price', 'max'),
                 Low=('Price', 'min'), Close=('Price', 'last'))
         ```
-      - <b>TimeParams</b>: finalmente esta clase facilita el cálculo de las
+    - <b>TimeParams</b>: finalmente esta clase facilita el cálculo de las
   ventanas temporales, momento ancla, etc...
 * [utils.py](https://github.com/raulsolera/crypto-rlslr/blob/main/utils.py): en
 este fichero se incluye toda la información de parámetros de control, opciones
