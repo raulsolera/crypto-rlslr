@@ -79,8 +79,8 @@ para el cálculo del Vwap desde -24 horas hasta sin ancla (por defecto -6 horas)
 Que adaptan la visualización a las opciones deseadas, como se puede ver eb
 los siguientes ejemplos:
 
-<img src="/Users/rsolera/Documents/MASTER Big Data/Python para análisis de datos/Proyecto Final/crypto-rlslr/images/eth-eur-15minWindow-24hoursAnchor.png" width="300"/>
-<img src="/Users/rsolera/Documents/MASTER Big Data/Python para análisis de datos/Proyecto Final/crypto-rlslr/images/xbt-usd-5minWindow-3hoursAnchor.png" width="300"/>
+<img src="images/eth-eur-15minWindow-24hoursAnchor.png" width="500"/>
+<img src="images/xbt-usd-5minWindow-3hoursAnchor.png" width="500"/>
 
 ### Instalación y dependecias:
 El proyecto se ha desarrollado en python 3.9.7 y tiene los requerimientos
@@ -103,11 +103,14 @@ El proyecto se construido en python 3.9 en un entorno virtual
 
 Para la visualización se han utilizando el framework
 [dash](https://plotly.com/dash/)
-y la librería gráfica [plotly](https://plotly.com/python/) y la librería pandas
+y la librería gráfica [plotly](https://plotly.com/python/) y la librería
+[pandas](https://pandas.pydata.org/)
 para la agregación de trades y cálculo de Vwap, OHLC...
 
-La descarga de la información de la API pública de Kraken se ha gestionado con
-los módulos urllib.request y json.
+La descarga de la información de la
+[API pública de Kraken](https://api.kraken.com/0/public/Trades?pair=XETHZEUR&since=157406713999999999) se ha gestionado con
+los módulos [urllib.request](https://docs.python.org/3/library/urllib.request.html)
+y [json](https://docs.python.org/3/library/json.html).
 
 Se ha utilizado [git](https://git-scm.com/) para el control de cambios y
 [github](https://github.com/raulsolera/crypto-rlslr) como repositorio remoto.
@@ -158,6 +161,15 @@ lay out de la aplicación.
 
 
 ### Limitaciones:
+La API pública de Kraken devuelve 1000 trades en cada llamada y controla el 
+número máximo de llamadas, si por los parámetros de ejecución se exceden los
+límites la aplicación hace pausas de 3 segundos para esperar respuesta.
+Por tanto, en general las actualizaciones son lentas y en algunos casos se
+ha observado que la llamada a la API se ha quedado "parada".
+
+Por este motivo se han ajustado los parámetros de usuario para evitar llamadas
+excesivas, sin embargo con el máximo posible (Bitcoin a USD con anchor de -24
+horas) el tiempo de respuesta puede ser muy elevado.
 
 
 ### Actualizaciones deseables:
