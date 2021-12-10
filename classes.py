@@ -225,4 +225,3 @@ class TimeParams:
         else:
             # Or if no anchor
             return None, span_interval[0].astimezone(pytz.utc)
-        
