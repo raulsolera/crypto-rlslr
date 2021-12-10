@@ -2,6 +2,7 @@ import pandas as pd
 import time
 import urllib.request
 import json
+import pytz
 from datetime import datetime, timedelta
 import utils as ut
 
@@ -17,7 +18,7 @@ class KrakenTrades:
             pd.DataFrame(_trades,
                          columns=['Price', 'Volume', 'Time',
                                   'Buy/Sell', 'Limited/Market', '_'])
-        df['Time'] = pd.to_datetime(df['Time'], unit='s')
+        df['Time'] = pd.to_datetime(df['Time'], unit='s', utc=True)
         df.set_index('Time', inplace=True)
         df.drop(columns=['_', 'Buy/Sell', 'Limited/Market'], inplace=True)
         df = df.astype(float)
@@ -31,7 +32,7 @@ class KrakenTrades:
         self.first_trade = None
         self.values = pd.DataFrame()
 
-    def __retrive_trades(self, _from, _to=datetime.now()):
+    def __retrive_trades(self, _from, _to=datetime.now().astimezone(pytz.utc)):
 
         # starting time (_from)
         if self.first_trade:
@@ -78,7 +79,7 @@ class KrakenTrades:
                 break
 
         return (_trades,
-                datetime.fromtimestamp(last_timestamp))
+                datetime.fromtimestamp(last_timestamp).astimezone(pytz.utc))
 
     def update_trades(self, _pair, _from):
 
@@ -198,7 +199,7 @@ class TimeParams:
         # get the begining of the last window before now()
 
         last_window_start = \
-            ut.get_time_window_start(datetime.now(),
+            ut.get_time_window_start(datetime.now().astimezone(pytz.utc),
                                      window=self.window_size)
 
         # Considering we are showing no_windows number of windows
@@ -218,7 +219,8 @@ class TimeParams:
             trades_start = min(anchor_time, span_interval[0])
             # Finally we need trades from the min of the starting time
             # of the graph and the anchor time calculated previously
-            return anchor_time, trades_start
+            return anchor_time.astimezone(pytz.utc),\
+                trades_start.astimezone(pytz.utc)
         else:
             # Or if no anchor
-            return None, span_interval[0]
+            return None, span_interval[0].astimezone(pytz.utc)

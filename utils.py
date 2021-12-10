@@ -39,8 +39,7 @@ anchor_time = {
     '-4 hours':    4*60*60,
     '-3 hours':    3*60*60,
     '-2 hours':    2*60*60,
-    '-1 hours':    1*60*60,
-    'From now':    0*60*60,
+    '-1 hour':    1*60*60,
     'No anchor':      None}
 
 

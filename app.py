@@ -14,7 +14,7 @@ from classes import KrakenTrades, GroupedTrades, TimeParams
 default_crypto = 'ETH'
 default_currency = 'EUR'
 default_window = '1 min'
-default_anchor = '-2 hours'
+default_anchor = '-1 hour'
 CONSTANT_NO_WINDOWS = 90
 
 external_stylesheets = [
@@ -198,14 +198,29 @@ def display(from_crypto, to_currency, window_size, anchor_time):
     )
     fig.update_layout(xaxis_rangeslider_visible=False)
 
-    fig.update_layout(legend=dict(
-        orientation="h",
-        yanchor="bottom",
-        y=1.05,
-        xanchor="right",
-        x=1))
+    fig.update_layout(
+        title={
+            'text': f"from {from_crypto} to {to_currency}"
+                    f" (starting at "
+                    f"{window_time_start.strftime('%d/%m/%Y %H:%M:%S')})",
+
+            'y': 0.9,
+            'x': 0.05,
+            'xanchor': 'left',
+            'yanchor': 'top'},
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=1.05,
+            xanchor="right",
+            x=1),
+    )
 
     fig.update_xaxes(
+        title_text="<b>UTC Time</b>",
+        titlefont=dict(
+            size=12,
+            color="gray"),
         showline=True,
         linewidth=1,
         linecolor='gray',
