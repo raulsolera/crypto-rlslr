@@ -80,7 +80,7 @@ para el cálculo del Vwap desde -24 horas hasta sin ancla (por defecto -6 horas)
 Que adaptan la visualización a las opciones deseadas, como se puede ver eb
 los siguientes ejemplos:
 
-<img src="images/eth-eur-15minWindow-24hoursAnchor.png" width="350"/> <img src="images/xbt-usd-5minWindow-3hoursAnchor.png" width="350"/>
+<img src="images/eth-eur-15minWindow-24hoursAnchor.png" width="330"/> <img src="images/xbt-usd-5minWindow-3hoursAnchor.png" width="330"/>
 
 ### Instalación y dependecias:
 El proyecto se ha desarrollado en python 3.9.7 y tiene los requerimientos
