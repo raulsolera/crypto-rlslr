@@ -22,7 +22,6 @@ candles_color = {
     1: 'green'}
 
 window_size = {
-    '10 sec':  (10,      '10s'),
     '30 sec':  (30,      '30s'),
     '1 min':   (60,     '1min'),
     '2 min':   (60*2,   '2min'),
@@ -39,7 +38,6 @@ anchor_time = {
     '-4 hours':    4*60*60,
     '-3 hours':    3*60*60,
     '-2 hours':    2*60*60,
-    '-1 hour':    1*60*60,
     'No anchor':      None}
 
 

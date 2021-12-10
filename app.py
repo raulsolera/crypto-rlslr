@@ -13,8 +13,8 @@ from classes import KrakenTrades, GroupedTrades, TimeParams
 # Default params:
 default_crypto = 'ETH'
 default_currency = 'EUR'
-default_window = '1 min'
-default_anchor = '-1 hour'
+default_window = '5 min'
+default_anchor = '-6 hours'
 CONSTANT_NO_WINDOWS = 90
 
 external_stylesheets = [
@@ -49,7 +49,7 @@ app.layout = html.Div(
             children=[
                 html.Div(
                     children=[
-                        html.Div(children="Crypto", className="menu-title"),
+                        html.Div(children="From crypto", className="menu-title"),
                         dcc.Dropdown(
                             id="from-crypto",
                             options=[
@@ -64,7 +64,7 @@ app.layout = html.Div(
                 ),
                 html.Div(
                     children=[
-                        html.Div(children="Currency", className="menu-title"),
+                        html.Div(children="To currency", className="menu-title"),
                         dcc.Dropdown(
                             id="to-currency",
                             options=[
@@ -80,7 +80,7 @@ app.layout = html.Div(
                 ),
                 html.Div(
                     children=[
-                        html.Div(children="Window", className="menu-title"),
+                        html.Div(children="Time window", className="menu-title"),
                         dcc.Dropdown(
                             id="window-size",
                             options=[
@@ -95,7 +95,7 @@ app.layout = html.Div(
                 ),
                 html.Div(
                     children=[
-                        html.Div(children="Anchor", className="menu-title"),
+                        html.Div(children="Anchor (for Vwap calc)", className="menu-title"),
                         dcc.Dropdown(
                             id="anchor-time",
                             options=[
@@ -156,7 +156,7 @@ def display(from_crypto, to_currency, window_size, anchor_time):
     ohlc_data = grouped_trades.ohlc[-(CONSTANT_NO_WINDOWS+1):]
     vwap_data = grouped_trades.vwap[-(CONSTANT_NO_WINDOWS + 1):]
     volume_data = grouped_trades.volume[-(CONSTANT_NO_WINDOWS + 1):]
-    window_time_start = vwap_data.index[0]
+    window_time_start = ohlc_data.index[0]
     # instant_data = trades.values[trades.values.index >= window_time_start]
 
     # make graphs
