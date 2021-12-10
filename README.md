@@ -31,15 +31,16 @@ Si bien para los gráficos
 [OHLC](https://en.wikipedia.org/wiki/Open-high-low-close_chart) y Volumen
 negociado existen numerosas referencias, no es así para el cálculo del Vwap.
 En este proyecto, por defecto se emplea la versión que consideramos estándar:
-precio típico ponderado por volumen acumulado desde un momento ancla
-"anchor time"
-([ejemplo de cálculo en spreadsheet](https://docs.google.com/spreadsheets/d/143nJ1dhsr6GTQr9Wr8kQby6rOqBGMS9BTrhz5AWNMsY/edit#gid=1559753437)),
-método para el cual se han encontrado nuemeros referencias
+>precio típico ponderado por volumen acumulado desde un momento ancla
+>"anchor time"
+
+([ver ejemplo de cálculo en spreadsheet](https://docs.google.com/spreadsheets/d/143nJ1dhsr6GTQr9Wr8kQby6rOqBGMS9BTrhz5AWNMsY/edit#gid=1559753437)),
+método para el cual se han encontrado numerosas referencias
 ([investopia](https://www.investopedia.com/terms/v/vwap.asp).
 [tradingview](https://www.tradingview.com/scripts/vwap/?solution=43000502018)...),
 Sin embargo en el proyecto también se permite la representación del Vwap sin
-ancla temporal de referencia (aunque entedemos que en ese caso aporta poca
-informacón adicional
+ancla temporal de referencia (aunque entendemos que en ese caso aporta poca
+información adicional
 al gráfico OHLC).
 
 Las referencias estándar para el cálculo del Vwap suelen fijar el ancla temporal
@@ -49,14 +50,14 @@ cotización continua) se ha tomado la decisión de permitir fijar el Vwap desde
 una serie de horas hacia atrás desde el momento actual. Por defecto se toman -6
 horas pero es un parámetro modificable por el usuario.
 
-Algo caraterístico de estos tres gráficos es que en los tres casos se basan en
-una ventana temporal, y por tanto para represetación gráfica por pantalla se ha
+Algo característico de estos tres gráficos es que en los tres casos se basan en
+una ventana temporal, y por tanto para representación gráfica por pantalla se ha
 basado en un número fijo de ventanas temporales que se ha considerado cómoda
 (este número se podría haber dejado como un parámetro de usuario pero de
 momento se ha fijado en 90 ventanas completas más la ventana actual (que aún no
 se ha completado)). Para clarificar se explicará con un ejemplo:
 
-> Si en el momento de genera el gráfico son las 7:49 horas de la mañana y se ha
+> Si en el momento de generar el gráfico son las 7:49 horas de la mañana y se ha
 > elegido una ventana de 5 minutos, se considera que la última ventana completa
 > termina a las 7:45 y desde esa referencia se muestran 90 ventanas completas
 > que son 450 minutos o 7:30 horas por lo que la hora inicial serán las 0:15
@@ -69,9 +70,9 @@ Por tanto el usuario podrá actuar sobre 3 parámetros:
 
 ![project graph](images/user_options.png)
 * <b>Par de monedas</b>, eligiendo cryptomoneda (de momento ETH - Ethereum, XBT -
-Bitcoin) origen y moneda estándar (USD - Dolar, EUR - Euro) destino (por
+Bitcoin) origen y moneda estándar (USD - Dólar, EUR - Euro) destino (por
 defecto ETH - Ethereum y EUR - Euro)
-* <b>Tamaño de la ventana</b> para los gráficos pudiendo eleigir distintas ventanas
+* <b>Tamaño de la ventana</b> para los gráficos pudiendo elegir distintas ventanas
 desde 30 segundos hasta 15 minutos (por defecto 5 minutos)
 * <b>Tiempo ancla</b> (en número de horas hacia atrás) desde el que se fija el acumulado
 para el cálculo del Vwap desde -24 horas hasta sin ancla (por defecto -6 horas) 
@@ -97,10 +98,10 @@ La instalación recomendada es la siguiente:
 8. Acceder al [servidor local](http://127.0.0.1:8050/) desde un navegador 
 
 ### Descripción técnica:
-El proyecto se construido en python 3.9 en un entorno virtual
+El proyecto se ha construido en python 3.9 en un entorno virtual
 [pyenv](https://docs.python.org/3/tutorial/venv.html).
 
-Para la visualización se han utilizando el framework
+Para la visualización se han utilizado el framework
 [dash](https://plotly.com/dash/)
 y la librería gráfica [plotly](https://plotly.com/python/) y la librería
 [pandas](https://pandas.pydata.org/)
@@ -124,10 +125,10 @@ La aplicación se ha organizado en tres ficheros .py y un fichero .css para
 la hoja de estilos:
 * [app.py](https://github.com/raulsolera/crypto-rlslr/blob/main/app.py):
 contiene el código principal de la aplicación: la definición del servidor, 
-el layout, y la función de actualizción de los gráficos
+el layout, y la función de actualización de los gráficos
 * [classes.py](https://github.com/raulsolera/crypto-rlslr/blob/main/classes.py):
 incluye la definición de las clases para facilitar el proceso:
-    - <b>KrakenTrades</b>: encapsula toda la funcionlidad para la llamada a la
+    - <b>KrakenTrades</b>: encapsula toda la funcionalidad para la llamada a la
   api de kraken pasando solo un par de monedas y una fecha inicial, llamando a
   la funcion ```update_trades``` 1) si no ha cargado cotizaciones las carga, 2) 
   si tiene cargadas cotizaciones para el mismo par de monedas actualiza las 
@@ -172,9 +173,9 @@ horas) el tiempo de respuesta puede ser muy elevado.
 
 
 ### Actualizaciones deseables:
-Aunque el objetivo del proyecto se ha completado, sin hay una serie de mejoras
+Aunque el objetivo del proyecto se ha alcanzado, si hay una serie de mejoras
 que no se han podido desarrollar por falta de tiempo:
-- Toda la información se mnuestra en hora UTC, ha quedado pendiente adaptar la
+- Toda la información se muestra en hora UTC, ha quedado pendiente adaptar la
 hora a la franja horaria local de la ejecución.
 - en la clase ```KrakenTrades``` cuando se llama al método
 ```update_trades``` con una fecha-hora anterior a la del primer trade cargado
